@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat bot AI STV</title>
 
-    <!-- Highlight.js -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
@@ -122,13 +121,14 @@
       }
 
       /* Code blocks */
+      /* --- Crucial CSS fix for copy button positioning --- */
       pre {
         background: #1e1e1e;
         color: #e5e7eb;
         padding: 1rem;
         border-radius: 8px;
         overflow-x: auto;
-        position: relative;
+        position: relative; /* <--- This is key: make PRE the positioning context */
         margin-top: 0.5rem;
       }
 
@@ -138,7 +138,7 @@
       }
 
       .copy-btn {
-        position: absolute;
+        position: absolute; /* <--- Position relative to PRE */
         top: 6px;
         right: 6px;
         background: #333;
@@ -148,10 +148,11 @@
         border-radius: 4px;
         padding: 4px 6px;
         cursor: pointer;
+        z-index: 10; /* Ensure button is above code */
       }
 
       .lang-label {
-        position: absolute;
+        position: absolute; /* <--- Position relative to PRE */
         top: 6px;
         left: 8px;
         background: #444;
@@ -159,7 +160,9 @@
         font-size: 0.7rem;
         padding: 4px 6px;
         border-radius: 4px;
+        z-index: 10; /* Ensure label is above code */
       }
+      /* ------------------------------------------------ */
 
       a {
         color: #0070f3;
@@ -184,26 +187,32 @@
         font-size: 0.85rem;
         color: var(--text-light);
       }
+      
+      /* You don't need these extra Prism styles/scripts if you are using Highlight.js */
+      .code-block, .code-header, .copy-btn-prism {
+        /* Remove or comment out these if using Highlight.js */
+        /* display: none !important; */
+      }
     </style>
   </head>
 
   <body>
     <header>
       <h1>AI STV</h1>
-      <p>Powered by AI STV</p>
+      <p>Được hỗ trợ bởi AI STV</p>
     </header>
-
+    
     <div class="chat-container">
       <div id="chat-messages" class="chat-messages"></div>
-      <div class="typing-indicator" id="typing-indicator">AI is thinking...</div>
+      <div class="typing-indicator" id="typing-indicator">AI đang nghĩ...</div>
       <div class="message-input">
         <textarea
           id="user-input"
-          placeholder="Type your message here..."
+          placeholder="Nhập tin nhắn của bạn vào đây..."
           rows="1"
           autofocus
         ></textarea>
-        <button id="send-button">Send</button>
+        <button id="send-button">Gửi</button>
       </div>
     </div>
 
@@ -211,7 +220,6 @@
       <p>AI STV © 2025</p>
     </footer>
 
-    <!-- ✅ Format code + link -->
     <script>
       function formatMessage(text) {
         // link -> clickable
@@ -227,10 +235,11 @@
           const safeCode = code.replace(/[<>&]/g, (c) =>
             ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])
           );
+          // The copy button and language label are correctly placed inside <pre>
           return `
             <pre>
               <span class="lang-label">${detectedLang}</span>
-              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <button class="copy-btn" onclick="copyCode(this)">Sao chép</button>
               <code class="${detectedLang}">${safeCode}</code>
             </pre>`;
         });
@@ -248,10 +257,11 @@
       }
 
       function copyCode(btn) {
+        // Get the inner text of the <code> element within the same <pre>
         const code = btn.parentElement.querySelector("code").innerText;
         navigator.clipboard.writeText(code);
-        btn.innerText = "Copied!";
-        setTimeout(() => (btn.innerText = "Copy"), 1500);
+        btn.innerText = "Đã sao chép!";
+        setTimeout(() => (btn.innerText = "Sao chép"), 1500);
       }
 
       function highlightCodeBlocks() {
@@ -261,42 +271,7 @@
       }
     </script>
 
-    <!-- Giữ nguyên để xử lý chat -->
     <script src="chat.js"></script>
-    <!-- Prism.js highlight for code -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-html.min.js"></script>
-	
-	<style>
-	.code-block {
-	  background: #1e1e1e;
-	  color: #eee;
-	  border-radius: 8px;
-	  overflow: hidden;
-	  margin-top: 0.5rem;
-	}
-	.code-header {
-	  background: #2d2d2d;
-	  color: #f6821f;
-	  font-size: 0.85rem;
-	  padding: 4px 8px;
-	  display: flex;
-	  justify-content: space-between;
-	  align-items: center;
-	}
-	.copy-btn-prism {
-	  background: transparent;
-	  color: #f6821f;
-	  border: none;
-	  cursor: pointer;
-	  font-size: 0.8rem;
-	}
-	.copy-btn-prism:hover {
-	  color: white;
-	}
-	</style>
-  </body>
+    
+    </body>
 </html>
