@@ -263,5 +263,40 @@
 
     <!-- Giữ nguyên để xử lý chat -->
     <script src="chat.js"></script>
+    <!-- Prism.js highlight for code -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-html.min.js"></script>
+	
+	<style>
+	.code-block {
+	  background: #1e1e1e;
+	  color: #eee;
+	  border-radius: 8px;
+	  overflow: hidden;
+	  margin-top: 0.5rem;
+	}
+	.code-header {
+	  background: #2d2d2d;
+	  color: #f6821f;
+	  font-size: 0.85rem;
+	  padding: 4px 8px;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	}
+	.copy-btn {
+	  background: transparent;
+	  color: #f6821f;
+	  border: none;
+	  cursor: pointer;
+	  font-size: 0.8rem;
+	}
+	.copy-btn:hover {
+	  color: white;
+	}
+	</style>
   </body>
 </html>
