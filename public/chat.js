@@ -1,9 +1,3 @@
-/**
- * LLM Chat App Frontend
- *
- * Handles the chat UI interactions and communication with the backend API.
- */
-
 // DOM elements
 const chatMessages = document.getElementById("chat-messages");
 const userInput = document.getElementById("user-input");
@@ -20,13 +14,13 @@ let chatHistory = [
 ];
 let isProcessing = false;
 
-// Auto-resize textarea as user types
+// Auto-resize textarea
 userInput.addEventListener("input", function () {
   this.style.height = "auto";
   this.style.height = this.scrollHeight + "px";
 });
 
-// Send message on Enter (without Shift)
+// Enter to send
 userInput.addEventListener("keydown", function (e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -34,7 +28,7 @@ userInput.addEventListener("keydown", function (e) {
   }
 });
 
-// Send button click handler
+// Click send
 sendButton.addEventListener("click", sendMessage);
 
 /**
@@ -42,101 +36,67 @@ sendButton.addEventListener("click", sendMessage);
  */
 async function sendMessage() {
   const message = userInput.value.trim();
-
-  // Don't send empty messages
   if (message === "" || isProcessing) return;
 
-  // Disable input while processing
   isProcessing = true;
   userInput.disabled = true;
   sendButton.disabled = true;
 
-  // Add user message to chat
   addMessageToChat("user", message);
-
-  // Clear input
   userInput.value = "";
   userInput.style.height = "auto";
-
-  // Show typing indicator
   typingIndicator.classList.add("visible");
-
-  // Add message to history
   chatHistory.push({ role: "user", content: message });
 
   try {
-    // Create new assistant response element
+    // Create assistant message
     const assistantMessageEl = document.createElement("div");
     assistantMessageEl.className = "message assistant-message";
-    assistantMessageEl.innerHTML = "<p></p>";
+    const p = document.createElement("p");
+    assistantMessageEl.appendChild(p);
     chatMessages.appendChild(assistantMessageEl);
-
-    // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Send request to API
     const response = await fetch("/api/chat", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: chatHistory,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: chatHistory }),
     });
 
-    // Handle errors
-    if (!response.ok) {
-      throw new Error("Failed to get response");
-    }
+    if (!response.ok) throw new Error("Failed to get response");
 
-    // Process streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let responseText = "";
 
     while (true) {
       const { done, value } = await reader.read();
-
-      if (done) {
-        break;
-      }
-
-      // Decode chunk
+      if (done) break;
       const chunk = decoder.decode(value, { stream: true });
-
-      // Process SSE format
       const lines = chunk.split("\n");
+
       for (const line of lines) {
         try {
           const jsonData = JSON.parse(line);
           if (jsonData.response) {
-            // Append new content to existing text
             responseText += jsonData.response;
-            assistantMessageEl.querySelector("p").textContent = responseText;
-
-            // Scroll to bottom
+            p.innerHTML = formatMessage(responseText);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            if (window.Prism) Prism.highlightAll();
           }
-        } catch (e) {
-          console.error("Error parsing JSON:", e);
-        }
+        } catch {}
       }
     }
 
-    // Add completed response to chat history
     chatHistory.push({ role: "assistant", content: responseText });
   } catch (error) {
     console.error("Error:", error);
     addMessageToChat(
       "assistant",
-      "Sorry, there was an error processing your request.",
+      "❌ Xin lỗi, đã xảy ra lỗi khi xử lý yêu cầu của bạn."
     );
   } finally {
-    // Hide typing indicator
     typingIndicator.classList.remove("visible");
-
-    // Re-enable input
     isProcessing = false;
     userInput.disabled = false;
     sendButton.disabled = false;
@@ -145,14 +105,49 @@ async function sendMessage() {
 }
 
 /**
- * Helper function to add message to chat
+ * Format message: detect code, links, and add copy button
+ */
+function formatMessage(text) {
+  // Code block regex: ```lang\ncode```
+  const codeRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  let html = text.replace(codeRegex, (match, lang, code) => {
+    lang = lang || "plaintext";
+    const escaped = code.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+    return `
+      <div class="code-block">
+        <div class="code-header">
+          <span>${lang}</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code class="language-${lang}">${escaped}</code></pre>
+      </div>
+    `;
+  });
+
+  // Convert URLs to links
+  html = html.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+
+  return html;
+}
+
+/**
+ * Add message to chat
  */
 function addMessageToChat(role, content) {
   const messageEl = document.createElement("div");
   messageEl.className = `message ${role}-message`;
-  messageEl.innerHTML = `<p>${content}</p>`;
+  messageEl.innerHTML = `<p>${formatMessage(content)}</p>`;
   chatMessages.appendChild(messageEl);
-
-  // Scroll to bottom
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  if (window.Prism) Prism.highlightAll();
+}
+
+/**
+ * Copy code button
+ */
+function copyCode(btn) {
+  const code = btn.closest(".code-block").querySelector("code").innerText;
+  navigator.clipboard.writeText(code);
+  btn.textContent = "Copied!";
+  setTimeout(() => (btn.textContent = "Copy"), 2000);
 }
