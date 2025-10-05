@@ -69,6 +69,68 @@
         padding: 1rem;
         background-color: var(--light-bg);
       }
+      /* --- THANH ĐIỀU HƯỚNG BÊN TRÁI (SIDEBAR) --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--primary-color);
+        }
+
+        .menu-item i {
+            margin-right: 15px;
+            font-size: 1.1rem;
+        }
+        /* --- KHU VỰC NỘI DUNG CHÍNH (MAIN CONTENT) --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto; /* Cho phép cuộn nội dung */
+            background-color: white;
+        }
+
+        .header-bar {
+            background-color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        /* Container cho nội dung được tải (từ taoanh.html) */
+        #content-container {
+            /* Sẽ được fill bằng nội dung file taoanh.html */
+            min-height: 80vh; 
+        }
 
       .message {
         margin-bottom: 1rem;
@@ -200,6 +262,41 @@
   </head>
 
   <body>
+  
+
+    <div class="sidebar">
+        <div class="logo">AI STV App</div>
+        
+        <div class="menu-item active" id="menu-taoanh">
+            <i class="fas fa-magic"></i>
+            <span>Tạo Ảnh AI</span>
+        </div>
+        
+        <div class="menu-item">
+            <i class="fas fa-home"></i>
+            <span>Trang Chủ</span>
+        </div>
+
+        <div class="menu-item">
+            <i class="fas fa-history"></i>
+            <span>Lịch Sử</span>
+        </div>
+        
+        <div class="menu-item">
+            <i class="fas fa-cog"></i>
+            <span>Cài Đặt</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header-bar">
+            Đang tải: <span id="current-page-title">Tạo Ảnh AI</span>
+        </div>
+        
+        <div id="content-container">
+            </div>
+    </div>
+
     <header>
       <h1>AI STV</h1>
       <p>Được hỗ trợ bởi AI STV</p>
@@ -275,6 +372,84 @@
           hljs.highlightElement(block);
         });
       }
+      
+        const contentContainer = document.getElementById('content-container');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const pageTitle = document.getElementById('current-page-title');
+
+        /**
+         * Tải nội dung HTML từ một URL (file) vào khu vực chính.
+         * @param {string} url - Đường dẫn tới file HTML.
+         * @param {string} title - Tiêu đề của trang.
+         */
+        async function loadContent(url, title) {
+            try {
+                // Đặt trạng thái tải
+                contentContainer.innerHTML = `<p style="text-align: center; padding: 50px;">Đang tải nội dung ${title}...</p>`;
+                pageTitle.textContent = title;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Không thể tải file: ${response.statusText}`);
+                }
+                const htmlContent = await response.text();
+                
+                // Chèn nội dung vào container
+                contentContainer.innerHTML = htmlContent;
+                
+                // Nếu file tải là taoanh.html, cần chạy lại script của nó
+                if (url === 'taoanh.html') {
+                    executeScripts(contentContainer);
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi tải nội dung:", error);
+                contentContainer.innerHTML = `<h2 style="color: red; text-align: center; padding: 50px;">LỖI: Không thể tải trang. (${error.message})</h2>`;
+            }
+        }
+        
+        // Hàm để chạy lại các thẻ <script> sau khi tải nội dung mới
+        function executeScripts(targetElement) {
+            const scripts = targetElement.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                // Sao chép thuộc tính
+                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                newScript.textContent = oldScript.textContent;
+                
+                // Thay thế script cũ bằng script mới để trình duyệt thực thi lại
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+        }
+
+        // ----------------------------------------------------------------------
+        // Xử lý sự kiện click trên Menu
+        // ----------------------------------------------------------------------
+        menuItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const id = item.id;
+                
+                // Xóa lớp 'active' khỏi tất cả
+                menuItems.forEach(i => i.classList.remove('active'));
+                // Thêm lớp 'active' cho mục được chọn
+                item.classList.add('active');
+
+                // Xử lý logic tải trang dựa trên ID
+                if (id === 'menu-taoanh') {
+                    loadContent('taoanh.html', 'Tạo Ảnh AI');
+                } else if (id === 'menu-trangchu') {
+                    loadContent('trangchu.html', 'Trang Chủ');
+                }
+                // Các mục khác có thể được xử lý tương tự
+            });
+        });
+
+        // Tải trang mặc định khi khởi động (Tạo Ảnh AI)
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContent('taoanh.html', 'Tạo Ảnh AI');
+        });
+
+    
     </script>
 
     <script src="chat.js"></script>
