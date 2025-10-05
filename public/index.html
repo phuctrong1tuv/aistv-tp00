@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI STV - Giao Diện Ứng Dụng</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -16,9 +16,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
 
     <style>
-        /* Biến CSS (Giữ nguyên) */
+        /* Biến CSS */
         :root {
-            --sidebar-width: 250px; /* Định nghĩa chiều rộng sidebar */
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 60px; /* Chiều rộng khi đóng */
             --primary-color: #f6821f;
             --primary-hover: #e67e22;
             --light-bg: #f9fafb;
@@ -37,13 +38,12 @@
             padding: 0;
         }
 
-        /* --- FIX LỖI LAYOUT CHÍNH --- */
         body {
             font-family: "Inter", sans-serif;
             color: var(--text-color);
-            display: flex; /* KEY FIX 1: Sử dụng Flexbox cho bố cục chính */
-            height: 100vh; /* KEY FIX 2: Chiếm toàn bộ chiều cao màn hình */
-            overflow: hidden; /* Ngăn cuộn trang chính */
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* --- SIDEBAR --- */
@@ -55,7 +55,15 @@
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
-            flex-shrink: 0; /* Đảm bảo không bị co lại */
+            flex-shrink: 0;
+            transition: width 0.3s ease; /* Hiệu ứng chuyển động */
+            overflow: hidden;
+        }
+        
+        /* Trạng thái ĐÓNG */
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+            padding: 20px 10px;
         }
 
         .logo {
@@ -66,6 +74,18 @@
             padding-bottom: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
+            white-space: nowrap; /* Ngăn text bị xuống dòng */
+        }
+        
+        /* Ẩn text logo khi đóng */
+        .sidebar.collapsed .logo span {
+            display: none;
+        }
+        .sidebar .logo i {
+            display: none; /* Icon logo mặc định ẩn */
+        }
+        .sidebar.collapsed .logo i {
+            display: inline; /* Hiện icon logo khi đóng */
         }
 
         .menu-item {
@@ -76,6 +96,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s;
+            white-space: nowrap;
         }
 
         .menu-item:hover, .menu-item.active {
@@ -88,22 +109,49 @@
             font-size: 1.1rem;
         }
         
+        /* Ẩn text menu item khi đóng */
+        .sidebar.collapsed .menu-item span {
+            display: none;
+        }
+        /* Căn giữa icon khi đóng */
+        .sidebar.collapsed .menu-item {
+            justify-content: center;
+            padding: 12px 0;
+        }
+        .sidebar.collapsed .menu-item i {
+            margin-right: 0;
+        }
+
         /* --- NỘI DUNG CHÍNH (MAIN CONTENT) --- */
         .main-content {
-            flex-grow: 1; /* Chiếm phần còn lại của màn hình */
+            flex-grow: 1;
             background-color: var(--background-color);
             display: flex;
             flex-direction: column;
-            overflow-y: auto; /* Cho phép cuộn nội dung nếu dài */
+            overflow-y: hidden; /* Giữ nguyên không cuộn chính */
         }
 
         .header-bar {
             background-color: white;
-            padding: 15px 30px; /* Padding rộng hơn */
+            padding: 15px 30px;
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             font-size: 1.2rem;
             font-weight: 600;
+            display: flex; /* Bật flexbox để căn chỉnh icon toggle */
+            align-items: center;
+        }
+        
+        /* Nút Toggle Menu */
+        #menu-toggle {
+            cursor: pointer;
+            font-size: 1.5rem;
+            margin-right: 20px;
+            color: var(--text-color);
+            transition: transform 0.3s ease;
+        }
+        #menu-toggle:hover {
+            color: var(--primary-color);
         }
 
         /* Container cho nội dung được tải */
@@ -111,32 +159,27 @@
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto; /* Cho phép cuộn nội dung được tải */
-            /* Đặt max-width cho nội dung bên trong nếu cần căn giữa */
         }
 
-        /* --- XÓA CÁC THẺ KHÔNG CẦN THIẾT HOẶC DI CHUYỂN VÀO MAIN CONTENT --- */
-        header { 
-            /* Đã di chuyển Header vào nội dung được tải nếu cần */
-            display: none; 
-        }
-
+        /* Footer */
         footer {
-            margin-top: auto; /* Đẩy footer xuống dưới cùng */
+            margin-top: auto;
             text-align: center;
             font-size: 0.85rem;
             color: var(--text-light);
             padding: 10px;
             border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
         /* --- STYLE CHAT CŨ (Tích hợp lại) --- */
         .chat-container {
-            max-width: 800px; /* Giữ lại max-width để chat không quá rộng */
-            margin: 20px auto; /* Căn giữa trong content-container */
+            max-width: 800px; 
+            margin: 0 auto; /* Căn giữa trong content-container */
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 200px); /* Điều chỉnh chiều cao cho phù hợp với layout mới */
-            min-height: 400px;
+            /* Giữ nguyên chiều cao chat, điều chỉnh cho phù hợp */
+            height: 100%; 
             border: 1px solid var(--border-color);
             border-radius: 8px;
             overflow: hidden;
@@ -148,58 +191,28 @@
             padding: 1rem;
             background-color: var(--light-bg);
         }
-
-        .message {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
         /* ... Các style chat, code block, copy-btn còn lại (giữ nguyên) ... */
         
-        pre {
-            background: #1e1e1e;
-            color: #e5e7eb;
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
-            position: relative; 
-            margin-top: 0.5rem;
-            padding-top: 2rem; 
+        /* Điều chỉnh nhỏ cho Chatbot chung */
+        .chat-view {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .chat-view .chat-container {
+            flex-grow: 1;
+            height: auto; /* Cho phép tự co giãn theo container cha */
         }
 
-        .copy-btn {
-            position: absolute; 
-            top: 8px; 
-            right: 8px; 
-            background: transparent; 
-            color: #fff; 
-            border: 1px solid #444; 
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            z-index: 10;
-        }
-        .lang-label {
-            position: absolute; 
-            top: 8px;
-            left: 8px;
-            background: #444;
-            color: #fff;
-            font-size: 0.8rem;
-            padding: 4px 8px;
-            border-radius: 4px;
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="logo">AI STV App</div>
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-robot"></i> 
+            <span>AI STV App</span>
+        </div>
         
         <div class="menu-item active" id="menu-taoanh">
             <i class="fas fa-magic"></i>
@@ -224,6 +237,7 @@
 
     <div class="main-content">
         <div class="header-bar">
+            <i class="fas fa-bars" id="menu-toggle"></i>
             Đang tải: <span id="current-page-title">...</span>
         </div>
         
@@ -236,13 +250,26 @@
     </div>
 
     <script>
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menu-toggle');
         const contentContainer = document.getElementById('content-container');
         const menuItems = document.querySelectorAll('.menu-item');
         const pageTitle = document.getElementById('current-page-title');
 
-        // Hàm Tải Nội Dung (giống bước trước)
+        // ----------------------------------------------------------------------
+        // I. LOGIC ĐÓNG MỞ SIDEBAR
+        // ----------------------------------------------------------------------
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+
+        // ----------------------------------------------------------------------
+        // II. CÁC HÀM XỬ LÝ CHUNG
+        // ----------------------------------------------------------------------
+
+        // Hàm Tải Nội Dung (giữ nguyên logic fetch và executeScripts)
         async function loadContent(url, title) {
-            // ... (Giữ nguyên logic loadContent) ...
             try {
                 // Đặt trạng thái tải
                 contentContainer.innerHTML = `<p style="text-align: center; padding: 50px;">Đang tải nội dung ${title}...</p>`;
@@ -250,11 +277,7 @@
 
                 const response = await fetch(url);
                 if (!response.ok) {
-                    // Nếu lỗi 404, hiển thị nội dung lỗi thân thiện hơn
-                    if (response.status === 404) {
-                        throw new Error(`File "${url}" không tìm thấy.`);
-                    }
-                    throw new Error(`Không thể tải file: ${response.statusText}`);
+                    throw new Error(`File "${url}" không tìm thấy.`);
                 }
                 const htmlContent = await response.text();
                 
@@ -284,45 +307,44 @@
         }
         
         // ----------------------------------------------------------------------
-        // NỘI DUNG CHAT BOT (HTML TĨNH, KHÔNG CẦN TẢI TỪ FILE)
+        // III. NỘI DUNG CHAT BOT (STATIC HTML)
         // ----------------------------------------------------------------------
         const chatHtml = `
-            <div class="chat-container">
-                <header style="max-width: 100%; border: none; margin-bottom: 0;">
+            <div class="chat-view">
+                <header style="max-width: 800px; margin: 0 auto; border: none; padding: 1rem 0 0.5rem 0; text-align: center;">
                     <h1>AI STV</h1>
                     <p>Được hỗ trợ bởi AI STV</p>
                 </header>
-                <div id="chat-messages" class="chat-messages">
-                    <div class="message assistant-message">
-                        Chào bạn! Giao diện đã được sửa lỗi thành công!
-                        <br><br>
-                        👉 Để tạo ảnh, hãy chọn mục **Tạo Ảnh AI** ở menu bên trái.
-                        <br>
-                        👉 Hoặc thử gõ một đoạn code mẫu ở đây (như yêu cầu cũ của bạn).
+                <div class="chat-container">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="message assistant-message">
+                            Chào bạn! Giao diện đã được sửa lỗi thành công!
+                            <br><br>
+                            👉 Để tạo ảnh, hãy chọn mục **Tạo Ảnh AI** ở menu bên trái.
+                            <br>
+                            👉 Hoặc thử gõ một đoạn code mẫu ở đây (ví dụ: gõ "code python").
+                        </div>
                     </div>
-                </div>
-                <div class="typing-indicator" id="typing-indicator">AI đang nghĩ...</div>
-                <div class="message-input">
-                    <textarea
-                    id="user-input"
-                    placeholder="Nhập tin nhắn của bạn ở đây..."
-                    rows="1"
-                    autofocus
-                    ></textarea>
-                    <button id="send-button">Gửi</button>
+                    <div class="typing-indicator" id="typing-indicator">AI đang nghĩ...</div>
+                    <div class="message-input">
+                        <textarea
+                        id="user-input"
+                        placeholder="Nhập tin nhắn của bạn ở đây..."
+                        rows="1"
+                        autofocus
+                        ></textarea>
+                        <button id="send-button">Gửi</button>
+                    </div>
                 </div>
             </div>`;
 
 
         // ----------------------------------------------------------------------
-        // III. LOGIC XỬ LÝ CHATBOT (Cần phải định nghĩa ở đây để chat hoạt động)
+        // IV. LOGIC XỬ LÝ CHATBOT (Các hàm cần có để chat hoạt động)
         // ----------------------------------------------------------------------
         
-        // ... (Đặt tất cả các hàm formatMessage, detectLanguage, copyCode, highlightCodeBlocks, appendMessage, handleUserInput, vv... vào đây) ...
+        // Định nghĩa lại các hàm chat cần thiết (formatMessage, copyCode, highlightCodeBlocks, handleUserInput)
         
-        // NOTE: Vì code này quá dài, tôi sẽ chỉ để lại các hàm cốt lõi để minh họa
-        // và giả định bạn đã có hàm chat.js hoặc nội dung chat bot ở các bước trước
-
         function formatMessage(text) {
             text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
             const codeRegex = /```(\w+)?\n([\s\S]*?)```/g;
@@ -347,43 +369,56 @@
         }
         
         function highlightCodeBlocks() {
-            document.querySelectorAll("pre code").forEach((block) => {
+            document.querySelectorAll("#chat-messages pre code").forEach((block) => {
                 hljs.highlightElement(block);
             });
         }
         
-        // **********************************************
-        // * LƯU Ý: HÀM NÀY CẦN ĐƯỢC ĐỊNH NGHĨA ĐẦY ĐỦ *
-        // **********************************************
+        function appendMessage(sender, content) {
+            const chatMessages = document.getElementById('chat-messages');
+            if (!chatMessages) return;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'assistant-message');
+            
+            if (sender === 'user') {
+                messageDiv.textContent = content;
+            } else {
+                messageDiv.innerHTML = formatMessage(content); 
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            if (sender === 'assistant') {
+                highlightCodeBlocks();
+            }
+        }
+        
         function handleUserInput(message) {
-             const chat = document.getElementById('chat-messages');
              const input = document.getElementById('user-input');
-             if (!chat || !input) return; // Bảo vệ nếu chưa load chat
+             if (!input) return;
 
-             // Logic hiển thị tin nhắn người dùng
-             const userMsg = document.createElement('div');
-             userMsg.classList.add('message', 'user-message');
-             userMsg.textContent = message;
-             chat.appendChild(userMsg);
-             input.value = '';
+             appendMessage('user', message);
 
-             // Logic mô phỏng phản hồi
-             const assistantMsg = document.createElement('div');
-             assistantMsg.classList.add('message', 'assistant-message');
-             
+             // Simulate AI response
              let response = `🤖: Cảm ơn bạn đã hỏi "${message}". Giao diện chat hoạt động tốt rồi!`;
-             if (message.includes('code')) {
-                 response += '\n\nĐây là một đoạn code mẫu:\n```javascript\nfunction fixBug() {\n  return "Bug fixed!";\n}\n```';
+             if (message.toLowerCase().includes('code python')) {
+                 response = '🤖: Tuyệt vời! Đây là một đoạn code Python mẫu:\n\n```python\n# Hàm chào hỏi\ndef chao_hoi(ten):\n    print(f"Xin chào, {ten}!")\n\n# Gọi hàm\nchao_hoi("AI STV")\n```';
              }
 
-             assistantMsg.innerHTML = formatMessage(response);
-             chat.appendChild(assistantMsg);
-             chat.scrollTop = chat.scrollHeight;
-             highlightCodeBlocks();
+             // Thêm hiệu ứng gõ
+             const typingIndicator = document.getElementById('typing-indicator');
+             typingIndicator.classList.add('visible');
+
+             setTimeout(() => {
+                typingIndicator.classList.remove('visible');
+                appendMessage('assistant', response);
+             }, 1000); // 1 giây delay mô phỏng AI nghĩ
         }
 
         // ----------------------------------------------------------------------
-        // IV. GÁN SỰ KIỆN MENU
+        // V. GÁN SỰ KIỆN MENU VÀ KHỞI ĐỘNG
         // ----------------------------------------------------------------------
         
         menuItems.forEach(item => {
@@ -396,7 +431,7 @@
                 if (id === 'menu-taoanh') {
                     loadContent('taoanh.html', 'Tạo Ảnh AI');
                 } else if (id === 'menu-chatbot') {
-                    // Hiển thị nội dung chat bot đã định nghĩa tĩnh
+                    // Hiển thị nội dung chat bot tĩnh
                     pageTitle.textContent = 'Chatbot Chung';
                     contentContainer.innerHTML = chatHtml;
                     
@@ -407,6 +442,15 @@
                             handleUserInput(input.value.trim());
                         }
                     });
+                     document.getElementById('user-input').addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault(); 
+                            document.getElementById('send-button').click();
+                        }
+                    });
+                    
+                    highlightCodeBlocks(); // Highlight code block khởi động nếu có
+                    
                 } else {
                      pageTitle.textContent = item.querySelector('span').textContent;
                      contentContainer.innerHTML = `<p style="text-align: center; padding: 50px;">Nội dung trang ${item.querySelector('span').textContent} đang được phát triển...</p>`;
@@ -416,8 +460,8 @@
 
         // Tải trang mặc định khi khởi động
         document.addEventListener('DOMContentLoaded', () => {
-             // Kích hoạt mục Tạo Ảnh AI để load nội dung mặc định
-             document.getElementById('menu-taoanh').click();
+             // Tải Chatbot Chung làm mặc định
+             document.getElementById('menu-chatbot').click(); 
         });
 
     </script>
