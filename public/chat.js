@@ -268,7 +268,7 @@ function copyCode(btn) {
 
                 // Xử lý logic tải trang dựa trên ID
                 if (id === 'menu-taoanh') {
-                    loadContent('taoanh.html', 'Tạo Ảnh AI');
+                    loadContent('Taoanh.html', 'Tạo Ảnh AI');
                 } else if (id === 'menu-trangchu') {
                     loadContent('trangchu.html', 'Trang Chủ');
                 }
@@ -278,7 +278,7 @@ function copyCode(btn) {
 
         // Tải trang mặc định khi khởi động (Tạo Ảnh AI)
         document.addEventListener('DOMContentLoaded', () => {
-            loadContent('taoanh.html', 'Tạo Ảnh AI');
+            loadContent('Taoanh.html', 'Tạo Ảnh AI');
         });
 }
 
