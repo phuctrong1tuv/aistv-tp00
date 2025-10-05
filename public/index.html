@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat bot AI STV</title>
 
-    <!-- Highlight.js (tô màu code) -->
+    <!-- Highlight.js -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
@@ -121,12 +121,7 @@
         background-color: var(--primary-hover);
       }
 
-      #send-button:disabled {
-        background-color: var(--text-light);
-        cursor: not-allowed;
-      }
-
-      /* --- Code block --- */
+      /* Code blocks */
       pre {
         background: #1e1e1e;
         color: #e5e7eb;
@@ -216,7 +211,7 @@
       <p>AI STV © 2025</p>
     </footer>
 
-    <!-- 📘 Hàm format code + link (chat.js sẽ gọi) -->
+    <!-- ✅ Format code + link -->
     <script>
       function formatMessage(text) {
         // link -> clickable
@@ -266,7 +261,7 @@
       }
     </script>
 
-    <!-- Chat app script -->
+    <!-- Giữ nguyên để xử lý chat -->
     <script src="chat.js"></script>
   </body>
 </html>
